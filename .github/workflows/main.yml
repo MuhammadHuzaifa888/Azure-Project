@@ -42,13 +42,6 @@ jobs:
       - name: Load Docker Image
         run: docker load -i todo.tar
 
-      - name: Stop Existing Container
-        run: |
-          if [ "$(docker ps -q -f name=todolist)" ]; then
-            docker stop todolist
-            docker rm todolist
-          fi
-
       - name: Run Docker Container
         run: |
-          docker run -d --name todolist -p 4000:4000 todo:latest
+          docker run -d --name todolistazure -p 4000:4000 todo:latest
