@@ -18,10 +18,12 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to Azure Container Registry
+        env:
+          AZURE_LOGIN_SERVER: ${{ secrets.AZURE_LOGIN_SERVER }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
+          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
         run: |
-          docker login ${{ secrets.ACR_LOGIN_SERVER }} \
-          -u ${{ secrets.AZURE_USERNAME }} \
-          -p ${{ secrets.AZURE_PASSWORD }}
+          docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME -p $AZURE_PASSWORD || exit 1
 
       - name: Build and Push Docker Image to ACR
         run: |
