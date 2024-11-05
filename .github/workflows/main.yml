@@ -44,7 +44,7 @@ jobs:
 
       - name: Stop Existing Container
         run: |
-          if [ "$(docker ps -q -f name=todo-container)" ]; then
+          if [ "$(docker ps -q -f name=todolist)" ]; then
             docker stop todolist
             docker rm todolist
           fi
