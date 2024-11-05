@@ -19,14 +19,12 @@ jobs:
 
       - name: Log in to Azure Container Registry
         run: |
-          docker login ${{ secrets.AZURE_LOGIN_SERVER }} \
-          -u ${{ secrets.AZURE_USERNAME }} \
-          -p ${{ secrets.AZURE_PASSWORD }}
+          echo ${{ secrets.AZURE_PASSWORD }} | docker login ${{ secrets.AZURE_LOGIN_SERVER }} -u ${{ secrets.AZURE_USERNAME }} --password-stdin
 
       - name: Build and Push Docker Image to ACR
         run: |
-          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest .
-          docker push ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest
+          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}todo:latest .
+          docker push ${{ secrets.AZURE_LOGIN_SERVER }}todo:latest
 
       - name: Log out of ACR
         run: docker logout ${{ secrets.AZURE_LOGIN_SERVER }}
@@ -39,9 +37,7 @@ jobs:
     steps:
       - name: Log in to Azure Container Registry
         run: |
-          docker login ${{ secrets.AZURE_LOGIN_SERVER }} \
-          -u ${{ secrets.AZURE_USERNAME }} \
-          -p ${{ secrets.AZURE_PASSWORD }}
+          echo ${{ secrets.AZURE_PASSWORD }} | docker login ${{ secrets.AZURE_LOGIN_SERVER }} -u ${{ secrets.AZURE_USERNAME }} --password-stdin
 
       - name: Stop Existing Container
         run: |
@@ -51,11 +47,11 @@ jobs:
           fi
 
       - name: Pull Docker Image from ACR
-        run: docker pull ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest
+        run: docker pull ${{ secrets.AZURE_LOGIN_SERVER }}todo:latest
 
       - name: Run Docker Container
         run: |
-          docker run -d --name todolist -p 4000:4000 ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest
+          docker run -d --name todolist -p 4000:4000 ${{ secrets.AZURE_LOGIN_SERVER }}todo:latest
 
       - name: Log out of ACR
         run: docker logout ${{ secrets.AZURE_LOGIN_SERVER }}
