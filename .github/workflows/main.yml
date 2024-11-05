@@ -1,1 +1,54 @@
-name: Build and deploy to azure VM
+name: Build and Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - master  # Run workflow on pushes to the main branch
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest  # GitHub-hosted runner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker Image
+        run: |
+          docker build -t todo:latest .
+          docker save todo:latest -o todo.tar
+
+      - name: Upload Docker Image Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image
+          path: todo.tar
+
+  deploy:
+    name: Deploy to Azure VM
+    runs-on: self-hosted  
+    needs: build
+
+    steps:
+      - name: Download Docker Image Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-image
+
+      - name: Load Docker Image
+        run: docker load -i todo.tar
+
+      - name: Stop Existing Container
+        run: |
+          if [ "$(docker ps -q -f name=todo-container)" ]; then
+            docker stop todolist
+            docker rm todolist
+          fi
+
+      - name: Run Docker Container
+        run: |
+          docker run -d --name todolist -p 4000:4000 todo:latest
