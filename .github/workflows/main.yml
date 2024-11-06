@@ -23,7 +23,6 @@ jobs:
           echo $AZURE_PASSWORD | docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME --password-stdin
 
       - name: Build Docker Image
-        working-directory: ./Todo-List-nodejs  # Set the working directory where Dockerfile is located
         run: |
           docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .
 
