@@ -1,30 +1,31 @@
 name: Build and Push Docker Image to ACR
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
 jobs:
-  build-and-push-to-acr:
-    name: Build Docker Image and Push to ACR
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
       - name: Log in to Azure Container Registry
-        env:
-          AZURE_LOGIN_SERVER: ${{ secrets.AZURE_LOGIN_SERVER }}
-          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
-          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
-        run: |
-          echo "${AZURE_PASSWORD}" | docker login "${AZURE_LOGIN_SERVER}" -u "${AZURE_USERNAME}" --password-stdin
-      - name: Build Docker Image
-        run: |
-          docker build -t "${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest" .
-      - name: Push Docker Image to ACR
-        run: |
-          docker push "${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest"
-      - name: Log out of ACR
-        run: docker logout
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.AZURE_LOGIN_SERVER }}
+          username: ${{ secrets.AZURE_USERNAME }}
+          password: ${{ secrets.AZURE_PASSWORD }}
+      - name: Build and Push Docker Image to ACR
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.AZURE_LOGIN_SERVER }}/todo:${{ github.sha }}
 
 
 
