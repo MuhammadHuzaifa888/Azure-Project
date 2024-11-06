@@ -17,24 +17,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Verify ACR Login Secrets
-        run: |
-          echo "AZURE_LOGIN_SERVER=${{ secrets.AZURE_LOGIN_SERVER }}"
-          echo "AZURE_USERNAME is set"
-          echo "AZURE_PASSWORD is set"
-
       - name: Log in to Azure Container Registry
         env:
           AZURE_LOGIN_SERVER: ${{ secrets.AZURE_LOGIN_SERVER }}
-          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
-          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}  # Updated
+          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}  # Updated
         run: |
-          docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME -p $AZURE_PASSWORD
+          echo $AZURE_PASSWORD | docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME --password-stdin
 
       - name: Build and Push Docker Image to ACR
         run: |
-          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest .
-          docker push ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest
+          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .
+          docker push ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest
 
       - name: Log out of ACR
         run: docker logout ${{ secrets.AZURE_LOGIN_SERVER }}
@@ -48,24 +42,17 @@ jobs:
       - name: Log in to Azure Container Registry
         env:
           AZURE_LOGIN_SERVER: ${{ secrets.AZURE_LOGIN_SERVER }}
-          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
-          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}  
+          AZURE_PASSWORD: ${{ secrets.AZURE_PASSWORD }}  
         run: |
-          docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME -p $AZURE_PASSWORD
-
-      - name: Stop Existing Container
-        run: |
-          if [ "$(docker ps -q -f name=todolist)" ]; then
-            docker stop todolist
-            docker rm todolist
-          fi
+          echo $AZURE_PASSWORD | docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME --password-stdin
 
       - name: Pull Docker Image from ACR
-        run: docker pull ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest
+        run: docker pull ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest
 
       - name: Run Docker Container
         run: |
-          docker run -d --name todolist -p 4000:4000 ${{ secrets.AZURE_LOGIN_SERVER }} todo:latest
+          docker run -d --name todolist -p 4000:4000 ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest
 
       - name: Log out of ACR
         run: docker logout ${{ secrets.AZURE_LOGIN_SERVER }}
