@@ -25,7 +25,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.AZURE_LOGIN_SERVER }} todo:${{ github.sha }}
+          tags: ${{ secrets.AZURE_LOGIN_SERVER }}/cicdpiepline/todo:${{ github.sha }}
 
 
 
