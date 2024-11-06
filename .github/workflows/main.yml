@@ -24,7 +24,8 @@ jobs:
 
       - name: Build and Push Docker Image to ACR
         run: |
-          docker buildx build --platform linux/amd64 -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest . --push
+          docker buildx build --file /home/azureuser/Todo-List-nodejs/Dockerfile -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest /home/azureuser/Todo-List-nodejs
+          docker push ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest
 
       - name: Log out of ACR
         run: docker logout ${{ secrets.AZURE_LOGIN_SERVER }}
