@@ -22,8 +22,8 @@ jobs:
         run: |
           echo $AZURE_PASSWORD | docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME --password-stdin
 
-      - name: Build Docker Image
-        run: |
+      - name: Build Docker Image 
+        run: | 
           docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .
 
       - name: Push Docker Image to ACR
