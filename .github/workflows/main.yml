@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and Push Docker Image to ACR
         run: |
-          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .
+          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .  # Explicitly specify `.` as the build context
           docker push ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest
 
       - name: Log out of ACR
