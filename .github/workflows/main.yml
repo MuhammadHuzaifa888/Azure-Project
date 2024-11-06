@@ -3,7 +3,7 @@ name: Build and Deploy to Azure VM
 on:
   push:
     branches:
-      - master  # Run workflow on pushes to the master branch
+      - master  
 
 jobs:
   build-and-push-to-acr:
