@@ -31,4 +31,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.AZURE_LOGIN_SERVER }}/cicdpiepline/todo:latest  # Correct tag format
+          tags: cicdpiepline.azurecr.io/cicdpiepline/todo:latest  # Correct tag format
