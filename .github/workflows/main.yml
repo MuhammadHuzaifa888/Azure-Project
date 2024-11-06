@@ -22,9 +22,13 @@ jobs:
         run: |
           echo $AZURE_PASSWORD | docker login $AZURE_LOGIN_SERVER -u $AZURE_USERNAME --password-stdin
 
-      - name: Build and Push Docker Image to ACR
+      - name: Build Docker Image
+        working-directory: ./Todo-List-nodejs  # Set the working directory where Dockerfile is located
         run: |
-          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .  
+          docker build -t ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest .
+
+      - name: Push Docker Image to ACR
+        run: |
           docker push ${{ secrets.AZURE_LOGIN_SERVER }}/todo:latest
 
       - name: Log out of ACR
