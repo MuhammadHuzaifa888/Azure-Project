@@ -1,4 +1,4 @@
-name: Build and Push Docker Image to ECR
+name: Build and Push Docker Image to ECR and Deploy on ECS
 
 on:
   push:
@@ -41,3 +41,11 @@ jobs:
       - name: Push Docker image to ECR
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+      # Update ECS service with the new image
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --service ${{ secrets.ECS_SERVICE_NAME }} \
+            --force-new-deployment
