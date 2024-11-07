@@ -42,27 +42,19 @@ jobs:
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-      # Update ECS Task Definition JSON with the new image URI
-      - name: Prepare Task Definition
+      # Update ECS task definition with the new image URI
+      - name: Update ECS Task Definition
+        id: update-task-def
         run: |
           IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest"
-          sed -i "s|183295443669.dkr.ecr.us-east-1.amazonaws.com/railsapp:latest|$IMAGE_URI|" ecs-task-def.json
+          sed "s|<IMAGE>|$IMAGE_URI|" task-definition.json > task-definition-updated.json
 
-      # Register the new task definition
-      - name: Register ECS Task Definition
-        id: register_task_definition
-        run: |
-          TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://ecs-task-def.json \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          echo "::set-output name=TASK_DEF_ARN::$TASK_DEF_ARN"
+      # Deploy the updated task definition to ECS
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition-updated.json
+          service: ${{ secrets.ECS_SERVICE_NAME }}     
+          cluster: ${{ secrets.ECS_CLUSTER_NAME }}     
+          wait-for-service-stability: true
 
-      # Update ECS service to use the new task definition
-      - name: Update ECS service
-        run: |
-          aws ecs update-service \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --service ${{ secrets.ECS_SERVICE_NAME }} \
-            --task-definition ${{ steps.register_task_definition.outputs.TASK_DEF_ARN }} \
-            --force-new-deployment
