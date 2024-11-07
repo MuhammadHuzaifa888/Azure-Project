@@ -47,13 +47,13 @@ jobs:
         id: update-task-def
         run: |
           IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest"
-          sed "s|<IMAGE>|$IMAGE_URI|" task-definition.json > task-definition-updated.json
+          sed "s|<IMAGE>|$IMAGE_URI|" ecs-task-def.json > ecs-task-def-updated.json
 
       # Deploy the updated task definition to ECS
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: task-definition-updated.json
+          task-definition: ecs-task-def-updated.json
           service: ${{ secrets.ECS_SERVICE_NAME }}     
           cluster: ${{ secrets.ECS_CLUSTER_NAME }}     
           wait-for-service-stability: true
