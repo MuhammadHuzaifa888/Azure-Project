@@ -27,7 +27,7 @@ jobs:
         id: secrets
         run: |
           # Fetch the secret from AWS Secrets Manager
-          SECRETS_JSON=$(aws secretsmanager get-secret-value --secret-id my-secret-name --query 'SecretString' --output text)
+          SECRETS_JSON=$(aws secretsmanager get-secret-value --secret-id nodereactsecret --query 'SecretString' --output text)
           
           # Parse the JSON and export the variables
           export AWS_ACCOUNT_ID=$(echo "$SECRETS_JSON" | jq -r '.AWS_ACCOUNT_ID')
