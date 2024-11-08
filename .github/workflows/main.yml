@@ -22,39 +22,59 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}  # e.g., 'us-east-1'
 
+      # Retrieve secrets from AWS Secrets Manager
+      - name: Retrieve Secrets from AWS Secrets Manager
+        id: secrets
+        run: |
+          # Fetch the secret from AWS Secrets Manager
+          SECRETS_JSON=$(aws secretsmanager get-secret-value --secret-id my-secret-name --query 'SecretString' --output text)
+          
+          # Parse the JSON and export the variables
+          export AWS_ACCOUNT_ID=$(echo "$SECRETS_JSON" | jq -r '.AWS_ACCOUNT_ID')
+          export ECR_REPOSITORY_NAME=$(echo "$SECRETS_JSON" | jq -r '.ECR_REPOSITORY_NAME')
+          export ECS_SERVICE_NAME=$(echo "$SECRETS_JSON" | jq -r '.ECS_SERVICE_NAME')
+          export ECS_CLUSTER_NAME=$(echo "$SECRETS_JSON" | jq -r '.ECS_CLUSTER_NAME')
+          
+          # Set the parsed secrets as outputs for use in other steps
+          echo "::set-output name=AWS_ACCOUNT_ID::$AWS_ACCOUNT_ID"
+          echo "::set-output name=ECR_REPOSITORY_NAME::$ECR_REPOSITORY_NAME"
+          echo "::set-output name=ECS_SERVICE_NAME::$ECS_SERVICE_NAME"
+          echo "::set-output name=ECS_CLUSTER_NAME::$ECS_CLUSTER_NAME"
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
       # Log in to ECR
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.secrets.outputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       # Build Docker image using the Dockerfile in the repository
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REPOSITORY_NAME }}:latest .
+          docker build -t ${{ steps.secrets.outputs.ECR_REPOSITORY_NAME }}:latest .
 
       # Tag the Docker image
       - name: Tag Docker image
         run: |
-          docker tag ${{ secrets.ECR_REPOSITORY_NAME }}:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          docker tag ${{ steps.secrets.outputs.ECR_REPOSITORY_NAME }}:latest ${{ steps.secrets.outputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ steps.secrets.outputs.ECR_REPOSITORY_NAME }}:latest
 
       # Push the Docker image to ECR
       - name: Push Docker image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          docker push ${{ steps.secrets.outputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ steps.secrets.outputs.ECR_REPOSITORY_NAME }}:latest
 
       # Update ECS task definition with the new image URI
       - name: Update ECS Task Definition
         id: update-task-def
         run: |
-          IMAGE_URI="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest"
-          sed "s|<IMAGE>|$IMAGE_URI|" ecs-task-def.json > ecs-task-def-updated.json
+          IMAGE_URI="${{ steps.secrets.outputs.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ steps.secrets.outputs.ECR_REPOSITORY_NAME }}:latest"
+          sed "s|<IMAGE>|$IMAGE_URI|" task-definition.json > task-definition-updated.json
 
       # Deploy the updated task definition to ECS
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ecs-task-def-updated.json
-          service: ${{ secrets.ECS_SERVICE_NAME }}     
-          cluster: ${{ secrets.ECS_CLUSTER_NAME }}     
+          task-definition: task-definition-updated.json
+          service: ${{ steps.secrets.outputs.ECS_SERVICE_NAME }}      # ECS service name from Secrets Manager
+          cluster: ${{ steps.secrets.outputs.ECS_CLUSTER_NAME }}      # ECS cluster name from Secrets Manager
           wait-for-service-stability: true
-
